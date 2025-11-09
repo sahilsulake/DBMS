@@ -1,0 +1,94 @@
+import heapq
+
+def heuristic(a, b):
+    # Manhattan distance (used for grid movement)
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+def get_neighbors(node, rows, cols):
+    # Possible moves (up, down, left, right)
+    directions = [(1,0), (-1,0), (0,1), (0,-1)]
+    result = []
+    for dr, dc in directions:
+        r, c = node[0] + dr, node[1] + dc
+        if 0 <= r < rows and 0 <= c < cols:
+            result.append((r, c))
+    return result
+
+def astar(grid, start, goal):
+    rows, cols = len(grid), len(grid[0])
+    open_set = []
+    heapq.heappush(open_set, (heuristic(start, goal), 0, start))
+
+    came_from = {}
+    g_score = {start: 0}
+    count = 0
+
+    while open_set:
+        _, _, current = heapq.heappop(open_set)
+
+        if current == goal:
+            # Reconstruct path
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            path.append(start)
+            path.reverse()
+            return path
+
+        for neighbor in get_neighbors(current, rows, cols):
+            if grid[neighbor[0]][neighbor[1]] == 1:
+                continue  # Skip walls
+
+            tentative_g = g_score[current] + 1
+            if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g
+                f_score = tentative_g + heuristic(neighbor, goal)
+                count += 1
+                heapq.heappush(open_set, (f_score, count, neighbor))
+    return None
+
+# --- 🌈 Interactive Input Section ---
+def main():
+    rows = int(input("Enter number of rows: "))
+    cols = int(input("Enter number of columns: "))
+
+    print("\nEnter the grid row by row (0 for open, 1 for obstacle):")
+    grid = []
+    for i in range(rows):
+        row = list(map(int, input(f"Row {i+1}: ").split()))
+        grid.append(row)
+
+    print("\nEnter start coordinates (row col): ", end='')
+    start = tuple(map(int, input().split()))
+
+    print("Enter goal coordinates (row col): ", end='')
+    goal = tuple(map(int, input().split()))
+
+    print("\nFinding path...")
+    path = astar(grid, start, goal)
+
+    if path:
+        print("\npath found:")
+        print(path)
+        print("\nGrid with path marked as '*' :")
+        for r, c in path:
+            if (r, c) != start and (r, c) != goal:
+                grid[r][c] = '*'
+        for row in grid:
+            print(' '.join(str(x) for x in row))
+    else:
+        print("\nNo path found.")
+
+if __name__ == "__main__":
+    main()
+
+
+input:
+Enter the grid row by row (0 for open, 1 for obstacle):
+Row 1: 0 0 0 0 0
+Row 2: 0 1 1 0 0
+Row 3: 0 0 0 1 0
+Row 4: 1 1 0 0 0
+Row 5: 0 0 0 1 0
